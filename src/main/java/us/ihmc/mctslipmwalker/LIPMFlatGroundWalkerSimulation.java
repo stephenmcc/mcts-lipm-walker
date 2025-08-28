@@ -1,13 +1,17 @@
 package us.ihmc.mctslipmwalker;
 
+import com.google.common.util.concurrent.AtomicDouble;
+import us.ihmc.avatar.joystickBasedJavaFXController.XBoxOneJavaFXController;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.messager.SharedMemoryMessager;
 import us.ihmc.scs2.SimulationConstructionSet2;
 import us.ihmc.scs2.definition.controller.interfaces.ControllerDefinition;
 import us.ihmc.scs2.definition.visual.ColorDefinitions;
 import us.ihmc.scs2.definition.yoGraphic.YoGraphicBox3DDefinition;
 import us.ihmc.scs2.definition.yoGraphic.YoGraphicDefinitionFactory;
 import us.ihmc.scs2.simulation.robot.controller.RobotControllerManager;
+import us.ihmc.tools.inputDevices.joystick.exceptions.JoystickNotFoundException;
 
 public class LIPMFlatGroundWalkerSimulation
 {
@@ -40,6 +44,30 @@ public class LIPMFlatGroundWalkerSimulation
       scs2.initializeBufferSize(16000);
       scs2.setBufferRecordTickPeriod(10);
 
+//      try
+//      {
+//         AtomicDouble desiredVelocity = setupJoystickListener();
+//         scs2.addBeforePhysicsCallback(time ->
+//                                       {
+//                                          controller.getDesiredCruiseVelocity().set(desiredVelocity.get());
+//                                       });
+//      }
+//      catch (JoystickNotFoundException e)
+//      {
+//         e.printStackTrace();
+//      }
+
       scs2.start(true, false, false);
+   }
+
+   public static AtomicDouble setupJoystickListener() throws JoystickNotFoundException
+   {
+      AtomicDouble desiredVelocityToSet = new AtomicDouble();
+      SharedMemoryMessager messager = new SharedMemoryMessager(XBoxOneJavaFXController.XBoxOneControllerAPI);
+      new XBoxOneJavaFXController(messager);
+
+      messager.addTopicListener(XBoxOneJavaFXController.LeftStickYAxis, desiredVelocityToSet::set);
+      messager.startMessager();
+      return desiredVelocityToSet;
    }
 }
