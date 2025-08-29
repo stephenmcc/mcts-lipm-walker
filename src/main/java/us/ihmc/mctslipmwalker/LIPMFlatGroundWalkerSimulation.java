@@ -31,13 +31,15 @@ public class LIPMFlatGroundWalkerSimulation
       placeholderRobot.getRobot().addController(controller);
 
       // Add ground graphic
-      YoGraphicBox3DDefinition groundBox = new YoGraphicBox3DDefinition();
-      groundBox.setName("groundBox");
-      groundBox.setColor(ColorDefinitions.Green());
-      groundBox.setPosition(YoGraphicDefinitionFactory.newYoTuple3DDefinition(0.0, 0.0, -0.5, ReferenceFrame.getWorldFrame()));
-      groundBox.setSize(YoGraphicDefinitionFactory.newYoTuple3DDefinition(10.0, 10.0, 1.0, ReferenceFrame.getWorldFrame()));
-      groundBox.setOrientation(YoGraphicDefinitionFactory.newYoOrientation3DDefinition(new Quaternion(), ReferenceFrame.getWorldFrame()));
-      scs2.addYoGraphic(groundBox);
+//      YoGraphicBox3DDefinition groundBox = new YoGraphicBox3DDefinition();
+//      groundBox.setName("groundBox");
+//      groundBox.setColor(ColorDefinitions.Green());
+//      groundBox.setPosition(YoGraphicDefinitionFactory.newYoTuple3DDefinition(0.0, 0.0, -0.5, ReferenceFrame.getWorldFrame()));
+//      groundBox.setSize(YoGraphicDefinitionFactory.newYoTuple3DDefinition(10.0, 10.0, 1.0, ReferenceFrame.getWorldFrame()));
+//      groundBox.setOrientation(YoGraphicDefinitionFactory.newYoOrientation3DDefinition(new Quaternion(), ReferenceFrame.getWorldFrame()));
+//      scs2.addYoGraphic(groundBox);
+
+      GappedTerrain.addSCSGraphics(scs2);
 
       scs2.setDT(dt);
       scs2.setRealTimeRateSimulation(true);
