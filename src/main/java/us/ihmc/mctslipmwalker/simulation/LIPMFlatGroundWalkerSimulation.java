@@ -1,15 +1,11 @@
-package us.ihmc.mctslipmwalker;
+package us.ihmc.mctslipmwalker.simulation;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import us.ihmc.avatar.joystickBasedJavaFXController.XBoxOneJavaFXController;
-import us.ihmc.euclid.referenceFrame.ReferenceFrame;
-import us.ihmc.euclid.tuple4D.Quaternion;
+import us.ihmc.mctslipmwalker.planners.SteppingStrategy;
 import us.ihmc.messager.SharedMemoryMessager;
 import us.ihmc.scs2.SimulationConstructionSet2;
 import us.ihmc.scs2.definition.controller.interfaces.ControllerDefinition;
-import us.ihmc.scs2.definition.visual.ColorDefinitions;
-import us.ihmc.scs2.definition.yoGraphic.YoGraphicBox3DDefinition;
-import us.ihmc.scs2.definition.yoGraphic.YoGraphicDefinitionFactory;
 import us.ihmc.scs2.simulation.robot.controller.RobotControllerManager;
 import us.ihmc.tools.inputDevices.joystick.exceptions.JoystickNotFoundException;
 
@@ -24,7 +20,10 @@ public class LIPMFlatGroundWalkerSimulation
       double dt = 1.0e-3;
 
       // Setup controller
-      ControllerDefinition controllerDefinition = LIPMWalker.createControllerDefinition(dt);
+//      SteppingStrategy steppingStrategy = SteppingStrategy.HEURISTIC;
+      SteppingStrategy steppingStrategy = SteppingStrategy.MCTS_REPLAY;
+
+      ControllerDefinition controllerDefinition = LIPMWalker.createControllerDefinition(dt, steppingStrategy);
       RobotControllerManager controllerManager = placeholderRobot.getRobot().getControllerManager();
       LIPMWalker controller = (LIPMWalker) controllerDefinition.newController(controllerManager.getControllerInput(), controllerManager.getControllerOutput());
       scs2.addYoGraphic(controller.getSCS2YoGraphics());
@@ -44,7 +43,7 @@ public class LIPMFlatGroundWalkerSimulation
       scs2.setDT(dt);
       scs2.setRealTimeRateSimulation(true);
       scs2.initializeBufferSize(16000);
-      scs2.setBufferRecordTickPeriod(10);
+//      scs2.setBufferRecordTickPeriod(10);
 
 //      try
 //      {

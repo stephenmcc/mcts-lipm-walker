@@ -1,9 +1,8 @@
-package us.ihmc.mctslipmwalker;
+package us.ihmc.mctslipmwalker.simulation;
 
 import org.apache.commons.lang3.tuple.Pair;
 import us.ihmc.euclid.referenceFrame.ReferenceFrame;
 import us.ihmc.euclid.tools.EuclidCoreRandomTools;
-import us.ihmc.euclid.tools.EuclidCoreTools;
 import us.ihmc.euclid.tuple4D.Quaternion;
 import us.ihmc.scs2.SimulationConstructionSet2;
 import us.ihmc.scs2.definition.visual.ColorDefinitions;
@@ -17,7 +16,7 @@ import java.util.Random;
 
 public class GappedTerrain
 {
-   private static final Random random = new Random(32980);
+   private static final Random random = new Random(32983);
    public static final List<Pair<Double, Double>> TERRAIN = new ArrayList<>();
 
    static

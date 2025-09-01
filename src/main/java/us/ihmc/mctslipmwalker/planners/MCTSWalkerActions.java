@@ -1,6 +1,6 @@
-package us.ihmc.mctslipmwalker;
+package us.ihmc.mctslipmwalker.planners;
 
-public class LIPMWalkerSearchActions
+public class MCTSWalkerActions
 {
    private static final double[] CHILD_DT_SCALE_FACTORS = new double[] {0.5, 0.7, 0.85, 1.0, 1.15, 1.3, 1.5};
    private static final double[] CHILD_ICP_SCALE_FACTORS = new double[] {0.25, 0.5, 0.75, 1.0, 1.25, 1.4, 1.6, 1.8};

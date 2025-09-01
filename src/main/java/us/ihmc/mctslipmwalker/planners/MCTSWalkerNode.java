@@ -1,21 +1,20 @@
-package us.ihmc.mctslipmwalker;
+package us.ihmc.mctslipmwalker.planners;
 
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
 import us.ihmc.commons.MathTools;
 import us.ihmc.euclid.tools.EuclidCoreTools;
+import us.ihmc.mctslipmwalker.simulation.GappedTerrain;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static us.ihmc.mctslipmwalker.LIPMWalker.MIN_STEP_TIME;
-import static us.ihmc.mctslipmwalker.LIPMWalker.OMEGA;
-import static us.ihmc.mctslipmwalker.LIPMWalkerSearchActions.*;
-import static us.ihmc.mctslipmwalker.LIPMWalkerVelocityHelper.computePositionAtTime;
-import static us.ihmc.mctslipmwalker.LIPMWalkerVelocityHelper.computeVelocityAtTime;
-import static us.ihmc.mctslipmwalker.MCTSWalkerPlanner.MAX_SEARCH_DEPTH;
+import static us.ihmc.mctslipmwalker.planners.LIPMTools.*;
+import static us.ihmc.mctslipmwalker.planners.MCTSWalkerActions.*;
+import static us.ihmc.mctslipmwalker.planners.MCTSWalkerPlanner.MAX_SEARCH_DEPTH;
+import static us.ihmc.mctslipmwalker.simulation.LIPMWalker.MIN_STEP_TIME;
+import static us.ihmc.mctslipmwalker.simulation.LIPMWalker.OMEGA;
 
 public class MCTSWalkerNode
 {
@@ -36,7 +35,7 @@ public class MCTSWalkerNode
    private int n;
    private int depth;
 
-   private final TIntArrayList untriedActions = new TIntArrayList(LIPMWalkerSearchActions.ALL_ACTIONS);
+   private final TIntArrayList untriedActions = new TIntArrayList(MCTSWalkerActions.ALL_ACTIONS);
 
    public MCTSWalkerNode(MCTSWalkerNode parent, double x, double xd, double xb, double t, LIPMWalkerDesireds walkerDesireds, int depth)
    {
@@ -128,13 +127,13 @@ public class MCTSWalkerNode
 
    private MCTSWalkerNode generateNodeFromAction(int action)
    {
-      double tNominal = LIPMWalkerVelocityHelper.computeTimeToReachVelocity(x - xb, xd, walkerDesireds.getDesiredPeakVelocity());
+      double tNominal = computeTimeToReachVelocity(x - xb, xd, walkerDesireds.getDesiredPeakVelocity());
       if (tNominal < 0.0)
          tNominal = MIN_STEP_TIME; // min step time
 
       double stepLag = walkerDesireds.getStepLag();
       double t = tNominal * toDTScaleFactor(action);
-      double icp = xb + LIPMWalkerVelocityHelper.computeICPAtTime(x - xb, xd, t);
+      double icp = xb + computeICPAtTime(x - xb, xd, t);
       double xb = icp - toICPScaleFactor(action) * stepLag * Math.signum(walkerDesireds.getDesiredCruiseVelocity());
       return generateChild(xb, t);
    }
@@ -240,6 +239,26 @@ public class MCTSWalkerNode
 
          return -2.0;
       }
+   }
+
+   public double getT()
+   {
+      return t;
+   }
+
+   public double getXb()
+   {
+      return xb;
+   }
+
+   public double getXd()
+   {
+      return xd;
+   }
+
+   public double getX()
+   {
+      return x;
    }
 
    @Override

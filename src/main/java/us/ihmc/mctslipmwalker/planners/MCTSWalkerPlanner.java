@@ -1,17 +1,16 @@
-package us.ihmc.mctslipmwalker;
+package us.ihmc.mctslipmwalker.planners;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MCTSWalkerPlanner
 {
-   public static final int MAX_SEARCH_DEPTH = 6;
+   public static final int MAX_SEARCH_DEPTH = 7;
    private final MCTSWalkerNode rootNode;
    private int iteration;
 
-   public MCTSWalkerPlanner(double x, double xd, double xb, double desiredCruiseVelocity, double desiredPeakVelocity, double nominalStepDuration)
+   public MCTSWalkerPlanner(double x, double xd, double xb, LIPMWalkerDesireds walkerDesireds)
    {
-      LIPMWalkerDesireds walkerDesireds = new LIPMWalkerDesireds(desiredCruiseVelocity, desiredPeakVelocity, nominalStepDuration);
       rootNode = new MCTSWalkerNode(null, x, xd, xb, 0.0, walkerDesireds, 0);
    }
 
@@ -19,7 +18,7 @@ public class MCTSWalkerPlanner
    {
       long t0 = System.nanoTime();
 
-      for (int i = 0; i < 200000; i++)
+      for (int i = 0; i < 800000; i++)
       {
          doIteration();
       }
@@ -27,22 +26,27 @@ public class MCTSWalkerPlanner
       long t1 = System.nanoTime();
       System.out.println("Plan time: " + (t1 - t0) / 1000000 + " ms");
 
-      List<MCTSWalkerNode> nodes = new ArrayList<>();
-      packOptimalSolution(nodes, rootNode);
-
-      for (int i = 0; i < nodes.size(); i++)
+      List<MCTSWalkerNode> stepPlan = getStepPlan();
+      for (int i = 0; i < stepPlan.size(); i++)
       {
-         System.out.println(nodes.get(i));
+         System.out.println(stepPlan.get(i));
       }
    }
 
-   private static void packOptimalSolution(List<MCTSWalkerNode> nodes, MCTSWalkerNode nodeToPack)
+   public List<MCTSWalkerNode> getStepPlan()
+   {
+      List<MCTSWalkerNode> nodes = new ArrayList<>();
+      packSolution(nodes, rootNode.getBestChildUCB(0.0));
+      return nodes;
+   }
+
+   private static void packSolution(List<MCTSWalkerNode> nodes, MCTSWalkerNode nodeToPack)
    {
       nodes.add(nodeToPack);
       nodeToPack = nodeToPack.getBestChildUCB(0.0);
 
       if (nodeToPack != null)
-         packOptimalSolution(nodes, nodeToPack);
+         packSolution(nodes, nodeToPack);
    }
 
    private void doIteration()
@@ -88,17 +92,15 @@ public class MCTSWalkerPlanner
       double xd = 0.0;
       double xb = 0.0;
 
-      LIPMWalkerVelocityHelper velocityHelper = new LIPMWalkerVelocityHelper();
-      double xCruise = 0.2;
-      double peakVelocity = velocityHelper.getPeakVelocityFromCruiseVelocity(xCruise);
-      double stepTime = velocityHelper.getStepTimeFromCruiseVelocity(xCruise);
+      double desiredCruiseVelocity = 0.15;
+      LIPMWalkerDesireds walkerDesireds = new LIPMWalkerDesireds(desiredCruiseVelocity);
 
-      MCTSWalkerPlanner planner = new MCTSWalkerPlanner(x, xd, xb, xCruise, peakVelocity, stepTime);
+      MCTSWalkerPlanner planner = new MCTSWalkerPlanner(x, xd, xb, walkerDesireds);
       planner.plan();
 
       System.out.println("");
-//      List<MCTSWalkerNode> optimalPath = new ArrayList<>();
-//      buildOptimalPath(optimalPath, planner.rootNode);
+//      List<MCTSWalkerNode> solution = new ArrayList<>();
+//      packSolution(solution, planner.rootNode);
 
    }
 }

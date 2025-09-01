@@ -1,4 +1,4 @@
-package us.ihmc.mctslipmwalker;
+package us.ihmc.mctslipmwalker.simulation;
 
 import us.ihmc.scs2.definition.robot.*;
 import us.ihmc.scs2.simulation.SimulationSession;

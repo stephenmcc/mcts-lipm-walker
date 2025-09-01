@@ -1,4 +1,4 @@
-package us.ihmc.mctslipmwalker;
+package us.ihmc.mctslipmwalker.planners;
 
 public class MonteCarloTreeSearchLIPMPlanner
 {
