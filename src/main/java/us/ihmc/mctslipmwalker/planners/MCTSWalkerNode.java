@@ -91,6 +91,10 @@ public class MCTSWalkerNode
 
    public MCTSWalkerNode expand()
    {
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      //////////////// This needs work, when changing directions, computeTimeToReachVelocity will be NaN.
+      //////////////// Also if at rest, need to sample a few base positions...
+
       maxDepth = Math.max(maxDepth, depth + 1);
 
       if (EuclidCoreTools.epsilonEquals(x, xb, 1e-6) && EuclidCoreTools.epsilonEquals(xd, 0.0, 1e-6))

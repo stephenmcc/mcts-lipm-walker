@@ -5,7 +5,7 @@ import java.util.List;
 
 public class MCTSWalkerPlanner
 {
-   public static final int MAX_SEARCH_DEPTH = 7;
+   public static final int MAX_SEARCH_DEPTH = 5;
    private final MCTSWalkerNode rootNode;
    private int iteration;
 
@@ -18,7 +18,7 @@ public class MCTSWalkerPlanner
    {
       long t0 = System.nanoTime();
 
-      for (int i = 0; i < 800000; i++)
+      for (int i = 0; i < 30000; i++)
       {
          doIteration();
       }

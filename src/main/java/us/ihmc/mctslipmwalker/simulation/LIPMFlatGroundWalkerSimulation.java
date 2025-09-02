@@ -21,7 +21,8 @@ public class LIPMFlatGroundWalkerSimulation
 
       // Setup controller
 //      SteppingStrategy steppingStrategy = SteppingStrategy.HEURISTIC;
-      SteppingStrategy steppingStrategy = SteppingStrategy.MCTS_REPLAY;
+//      SteppingStrategy steppingStrategy = SteppingStrategy.MCTS_REPLAY;
+      SteppingStrategy steppingStrategy = SteppingStrategy.MCTS_ONLINE;
 
       ControllerDefinition controllerDefinition = LIPMWalker.createControllerDefinition(dt, steppingStrategy);
       RobotControllerManager controllerManager = placeholderRobot.getRobot().getControllerManager();

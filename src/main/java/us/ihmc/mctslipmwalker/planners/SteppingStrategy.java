@@ -19,6 +19,8 @@ public enum SteppingStrategy
             walkerDesireds.setDesiredCruiseVelocity(desiredCruiseVelocity);
             walkerDesireds.update();
             return new MCTSReplaySteppingStrategy(walkerDesireds, registry);
+         case MCTS_ONLINE:
+            return new MCTSOnlineSteppingStrategy(walkerDesireds, registry);
       }
 
       throw new RuntimeException("Implement me!");
