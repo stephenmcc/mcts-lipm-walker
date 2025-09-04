@@ -18,8 +18,6 @@ import static us.ihmc.mctslipmwalker.simulation.LIPMWalker.OMEGA;
 
 public class MCTSWalkerNode
 {
-   static int maxDepth = 0;
-
    private final MCTSWalkerNode parent;
    private final List<MCTSWalkerNode> children = new ArrayList<>();
 
@@ -94,21 +92,11 @@ public class MCTSWalkerNode
             backMotionPenalty -= 5.0; // com moving wrong way, penalize
       }
 
-      double velocityVariancePenalty = 0.0;
-//      double stepVelocityAvg = stepVelocities.sum() / stepVelocities.size();
-//      for (int i = 0; i < stepVelocities.size(); i++)
-//      {
-//         velocityVariancePenalty += EuclidCoreTools.square(stepVelocities.get(i) - stepVelocityAvg);
-//      }
-//      velocityVariancePenalty = -0.5 * Math.sqrt(velocityVariancePenalty / stepVelocities.size());
-
-      return averageVelocityScore + backMotionPenalty + velocityVariancePenalty;
+      return averageVelocityScore + backMotionPenalty;
    }
 
    public MCTSWalkerNode expand()
    {
-      maxDepth = Math.max(maxDepth, depth + 1);
-
       while (!untriedActions.isEmpty())
       { // try to expand until a valid action is found
          int randomAction = untriedActions.removeAt(random.nextInt(untriedActions.size()));

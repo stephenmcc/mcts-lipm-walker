@@ -1,13 +1,15 @@
 package us.ihmc.mctslipmwalker.planners;
 
+import us.ihmc.log.LogTools;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MCTSWalkerPlanner
 {
+   private static final boolean PRINT_TIMINGS = false;
    public static final int MAX_SEARCH_DEPTH = 5;
    private final MCTSWalkerNode rootNode;
-   private int iteration;
 
    public MCTSWalkerPlanner(double x, double xd, double xb, LIPMWalkerDesireds walkerDesireds)
    {
@@ -24,7 +26,9 @@ public class MCTSWalkerPlanner
       }
 
       long t1 = System.nanoTime();
-      System.out.println("Plan time: " + (t1 - t0) / 1000000 + " ms");
+
+      if (PRINT_TIMINGS)
+         LogTools.info("Plan time: " + (t1 - t0) / 1000000 + " ms");
 
       return rootNode.getNumberOfChildren() > 0;
    }
@@ -32,37 +36,36 @@ public class MCTSWalkerPlanner
    public List<MCTSWalkerNode> getStepPlan()
    {
       List<MCTSWalkerNode> nodes = new ArrayList<>();
-      packSolution(nodes, rootNode.getBestChildUCB(0.0));
+      MCTSWalkerNode bestChild = rootNode.getBestChildUCB(0.0);
+      if (bestChild != null)
+         packSolution(nodes, bestChild);
       return nodes;
    }
 
    private static void packSolution(List<MCTSWalkerNode> nodes, MCTSWalkerNode nodeToPack)
    {
       nodes.add(nodeToPack);
-      nodeToPack = nodeToPack.getBestChildUCB(0.0);
+
+      // done planning, time to exploit!
+      double alphaExplore = 0.0;
+      nodeToPack = nodeToPack.getBestChildUCB(alphaExplore);
 
       if (nodeToPack != null)
          packSolution(nodes, nodeToPack);
    }
 
-   private boolean doIteration()
+   private void doIteration()
    {
       // Selection -- use tree policy to select best child node
       MCTSWalkerNode rolloutNode = getNextNodeFromTreePolicy();
       if (rolloutNode == null)
-         return false;
+         return;
 
-      if (rolloutNode != null)
-      {
-         // Perform rollout to max depth
-         double score = rolloutNode.doRollout();
+      // Perform rollout to max depth
+      double score = rolloutNode.doRollout();
 
-         // Backpropogate score
-         rolloutNode.backPropagate(score);
-      }
-
-      iteration++;
-      return true;
+      // Backpropogate score
+      rolloutNode.backPropagate(score);
    }
 
    private MCTSWalkerNode getNextNodeFromTreePolicy()
@@ -88,23 +91,5 @@ public class MCTSWalkerPlanner
       }
 
       return currentNode;
-   }
-
-   public static void main(String[] args)
-   {
-      double x = 0.0;
-      double xd = 0.0;
-      double xb = 0.0;
-
-      double desiredCruiseVelocity = 0.15;
-      LIPMWalkerDesireds walkerDesireds = new LIPMWalkerDesireds(desiredCruiseVelocity);
-
-      MCTSWalkerPlanner planner = new MCTSWalkerPlanner(x, xd, xb, walkerDesireds);
-      planner.plan();
-
-      System.out.println("");
-//      List<MCTSWalkerNode> solution = new ArrayList<>();
-//      packSolution(solution, planner.rootNode);
-
    }
 }

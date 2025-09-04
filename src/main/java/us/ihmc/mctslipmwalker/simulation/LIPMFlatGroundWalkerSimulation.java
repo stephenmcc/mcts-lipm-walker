@@ -15,7 +15,7 @@ public class LIPMFlatGroundWalkerSimulation
    {
       PlaceholderRobot placeholderRobot = new PlaceholderRobot();
 
-      SimulationConstructionSet2 scs2 = new SimulationConstructionSet2("AcrobotSimulation", SimulationConstructionSet2.doNothingPhysicsEngine());
+      SimulationConstructionSet2 scs2 = new SimulationConstructionSet2("LIPM_MCTS_Simulation", SimulationConstructionSet2.doNothingPhysicsEngine());
       scs2.addRobot(placeholderRobot.getRobot());
       double dt = 1.0e-3;
 
@@ -29,15 +29,6 @@ public class LIPMFlatGroundWalkerSimulation
       LIPMWalker controller = (LIPMWalker) controllerDefinition.newController(controllerManager.getControllerInput(), controllerManager.getControllerOutput());
       scs2.addYoGraphic(controller.getSCS2YoGraphics());
       placeholderRobot.getRobot().addController(controller);
-
-      // Add ground graphic
-//      YoGraphicBox3DDefinition groundBox = new YoGraphicBox3DDefinition();
-//      groundBox.setName("groundBox");
-//      groundBox.setColor(ColorDefinitions.Green());
-//      groundBox.setPosition(YoGraphicDefinitionFactory.newYoTuple3DDefinition(0.0, 0.0, -0.5, ReferenceFrame.getWorldFrame()));
-//      groundBox.setSize(YoGraphicDefinitionFactory.newYoTuple3DDefinition(10.0, 10.0, 1.0, ReferenceFrame.getWorldFrame()));
-//      groundBox.setOrientation(YoGraphicDefinitionFactory.newYoOrientation3DDefinition(new Quaternion(), ReferenceFrame.getWorldFrame()));
-//      scs2.addYoGraphic(groundBox);
 
       GappedTerrain.addSCSGraphics(scs2);
 

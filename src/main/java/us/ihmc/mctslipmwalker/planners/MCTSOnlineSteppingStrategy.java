@@ -2,6 +2,7 @@ package us.ihmc.mctslipmwalker.planners;
 
 import us.ihmc.log.LogTools;
 import us.ihmc.yoVariables.registry.YoRegistry;
+import us.ihmc.yoVariables.variable.YoBoolean;
 import us.ihmc.yoVariables.variable.YoDouble;
 
 import java.util.List;
@@ -14,12 +15,14 @@ public class MCTSOnlineSteppingStrategy implements SteppingStrategyInterface
    private final LIPMWalkerDesireds walkerDesireds;
    private final YoDouble nextStepTime;
    private final YoDouble nextStepLocation;
+   private final YoBoolean plannerSuccessful;
 
    public MCTSOnlineSteppingStrategy(LIPMWalkerDesireds walkerDesireds, YoRegistry registry)
    {
       this.walkerDesireds = walkerDesireds;
       this.nextStepTime = new YoDouble("nextStepTime", registry);
       this.nextStepLocation = new YoDouble("nextStepLocation", registry);
+      this.plannerSuccessful = new YoBoolean("plannerSuccessful", registry);
 
       nextStepTime.setToNaN();
       nextStepLocation.setToNaN();
@@ -50,52 +53,37 @@ public class MCTSOnlineSteppingStrategy implements SteppingStrategyInterface
 
    private double planNextStep(double t, double x, double xd, double xb, double x_icp)
    {
-      try
-      {
-         MCTSWalkerPlanner planner = new MCTSWalkerPlanner(x, xd, xb, walkerDesireds);
+      MCTSWalkerPlanner planner = new MCTSWalkerPlanner(x, xd, xb, walkerDesireds);
+      plannerSuccessful.set(planner.plan());
 
-         if (planner.plan())
+      if (plannerSuccessful.getValue())
+      {
+         List<MCTSWalkerNode> stepPlan = planner.getStepPlan();
+         nextStepTime.set(t + stepPlan.get(0).getT());
+         nextStepLocation.set(stepPlan.get(0).getXb());
+      }
+      else
+      { // heuristic strategy
+
+         if (Math.abs(walkerDesireds.getDesiredCruiseVelocity()) < 1.0e-3)
          {
-            List<MCTSWalkerNode> stepPlan = planner.getStepPlan();
-            nextStepTime.set(t + stepPlan.get(0).getT());
-            nextStepLocation.set(stepPlan.get(0).getXb());
+            return x_icp;
+         }
+
+         double tStep = computeTimeToReachVelocity(x - xb, xd, walkerDesireds.getDesiredPeakVelocity());
+         if (Double.isNaN(tStep) || Double.isInfinite(tStep))
+         {
+            double additionalSteppingDistance = 0.03;
+            nextStepLocation.set(x_icp - additionalSteppingDistance * Math.signum(walkerDesireds.getDesiredCruiseVelocity()));
+            nextStepTime.set(t);
          }
          else
-         { // heuristic strategy
-
-            if (Math.abs(walkerDesireds.getDesiredCruiseVelocity()) < 1.0e-3)
-            {
-               return x_icp;
-            }
-
-            double tStep = computeTimeToReachVelocity(x - xb, xd, walkerDesireds.getDesiredPeakVelocity());
-            if (Double.isNaN(tStep) || Double.isInfinite(tStep))
-            {
-               double additionalSteppingDistance = 0.03;
-               nextStepLocation.set(x_icp - additionalSteppingDistance * Math.signum(walkerDesireds.getDesiredCruiseVelocity()));
-               nextStepTime.set(t);
-            }
-            else
-            {
-               double desiredPeakVelocity = walkerDesireds.getDesiredPeakVelocity();
-               double stepLag = computeStepLag(desiredPeakVelocity);
-               nextStepLocation.set(x_icp - stepLag);
-               nextStepTime.set(t + tStep);
-            }
+         {
+            double desiredPeakVelocity = walkerDesireds.getDesiredPeakVelocity();
+            double stepLag = computeStepLag(desiredPeakVelocity);
+            nextStepLocation.set(x_icp - stepLag);
+            nextStepTime.set(t + tStep);
          }
-      }
-      catch (Exception e)
-      {
-         LogTools.info("inputs:");
-         LogTools.info("x =  " + x + ";");
-         LogTools.info("xd = " + xd + ";");
-         LogTools.info("xb = " + xb + ";");
-         LogTools.info("xc = " + walkerDesireds.getDesiredCruiseVelocity() + ";");
-
-         System.out.flush();
-         e.printStackTrace();
-
-         System.exit(0);
       }
 
       return xb;
