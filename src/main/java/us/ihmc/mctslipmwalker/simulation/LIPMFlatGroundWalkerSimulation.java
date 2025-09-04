@@ -43,7 +43,8 @@ public class LIPMFlatGroundWalkerSimulation
 
       scs2.setDT(dt);
       scs2.setRealTimeRateSimulation(true);
-      scs2.initializeBufferSize(16000);
+      scs2.initializeBufferSize(20000);
+      scs2.setBufferRecordTickPeriod(5);
 //      scs2.setBufferRecordTickPeriod(10);
 
 //      try

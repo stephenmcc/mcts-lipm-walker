@@ -14,7 +14,7 @@ public class MCTSWalkerPlanner
       rootNode = new MCTSWalkerNode(null, x, xd, xb, 0.0, walkerDesireds, 0);
    }
 
-   public void plan()
+   public boolean plan()
    {
       long t0 = System.nanoTime();
 
@@ -26,11 +26,7 @@ public class MCTSWalkerPlanner
       long t1 = System.nanoTime();
       System.out.println("Plan time: " + (t1 - t0) / 1000000 + " ms");
 
-      List<MCTSWalkerNode> stepPlan = getStepPlan();
-      for (int i = 0; i < stepPlan.size(); i++)
-      {
-         System.out.println(stepPlan.get(i));
-      }
+      return rootNode.getNumberOfChildren() > 0;
    }
 
    public List<MCTSWalkerNode> getStepPlan()
@@ -49,10 +45,12 @@ public class MCTSWalkerPlanner
          packSolution(nodes, nodeToPack);
    }
 
-   private void doIteration()
+   private boolean doIteration()
    {
       // Selection -- use tree policy to select best child node
       MCTSWalkerNode rolloutNode = getNextNodeFromTreePolicy();
+      if (rolloutNode == null)
+         return false;
 
       if (rolloutNode != null)
       {
@@ -64,11 +62,17 @@ public class MCTSWalkerPlanner
       }
 
       iteration++;
+      return true;
    }
 
    private MCTSWalkerNode getNextNodeFromTreePolicy()
    {
       MCTSWalkerNode currentNode = rootNode;
+
+      if (rootNode.isFullyExpanded() && rootNode.getNumberOfChildren() == 0)
+      { // planner failed
+         return null;
+      }
 
       while (!currentNode.isTerminalNode())
       {

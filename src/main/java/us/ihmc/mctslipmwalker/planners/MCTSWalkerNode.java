@@ -35,7 +35,9 @@ public class MCTSWalkerNode
    private int n;
    private int depth;
 
-   private final TIntArrayList untriedActions = new TIntArrayList(MCTSWalkerActions.ALL_ACTIONS);
+   private final boolean stepImmediately;
+   private final TIntArrayList untriedActions;
+   private final double tNominal;
 
    public MCTSWalkerNode(MCTSWalkerNode parent, double x, double xd, double xb, double t, LIPMWalkerDesireds walkerDesireds, int depth)
    {
@@ -47,6 +49,20 @@ public class MCTSWalkerNode
       this.depth = depth;
 
       this.walkerDesireds = walkerDesireds;
+
+      double tStep = computeTimeToReachVelocity(x - xb, xd, walkerDesireds.getDesiredPeakVelocity());
+      stepImmediately = Double.isNaN(tStep) || Double.isInfinite(tStep) || tStep > 10.0;
+
+      if (stepImmediately)
+      {
+         untriedActions = new TIntArrayList(CHANGING_DIRECTION_ACTIONS);
+         tNominal = MIN_STEP_TIME;
+      }
+      else
+      {
+         untriedActions = new TIntArrayList(MCTSWalkerActions.NOMINAL_ALL_ACTIONS);
+         tNominal = tStep;
+      }
    }
 
    public boolean isValidNode()
@@ -71,74 +87,62 @@ public class MCTSWalkerNode
       stepVelocities.clear();
       populateStepVelocities(stepVelocities);
 
-      double backStepPenalty = 0.0;
+      double backMotionPenalty = 0.0;
       for (int i = 0; i < stepVelocities.size(); i++)
       {
          if (stepVelocities.get(i) * Math.signum(walkerDesireds.getDesiredCruiseVelocity()) < 0.0)
-            backStepPenalty -= 5.0; // com moving wrong way, penalize
+            backMotionPenalty -= 5.0; // com moving wrong way, penalize
       }
 
       double velocityVariancePenalty = 0.0;
-      double stepVelocityAvg = stepVelocities.sum() / stepVelocities.size();
-      for (int i = 0; i < stepVelocities.size(); i++)
-      {
-         velocityVariancePenalty += EuclidCoreTools.square(stepVelocities.get(i) - stepVelocityAvg);
-      }
-      velocityVariancePenalty = -0.5 * Math.sqrt(velocityVariancePenalty / stepVelocities.size());
+//      double stepVelocityAvg = stepVelocities.sum() / stepVelocities.size();
+//      for (int i = 0; i < stepVelocities.size(); i++)
+//      {
+//         velocityVariancePenalty += EuclidCoreTools.square(stepVelocities.get(i) - stepVelocityAvg);
+//      }
+//      velocityVariancePenalty = -0.5 * Math.sqrt(velocityVariancePenalty / stepVelocities.size());
 
-      return averageVelocityScore + backStepPenalty + velocityVariancePenalty;
+      return averageVelocityScore + backMotionPenalty + velocityVariancePenalty;
    }
 
    public MCTSWalkerNode expand()
    {
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      //////////////// This needs work, when changing directions, computeTimeToReachVelocity will be NaN.
-      //////////////// Also if at rest, need to sample a few base positions...
-
       maxDepth = Math.max(maxDepth, depth + 1);
 
-      if (EuclidCoreTools.epsilonEquals(x, xb, 1e-6) && EuclidCoreTools.epsilonEquals(xd, 0.0, 1e-6))
-      {
-         double xStep = 0.03;
-         double dt = MIN_STEP_TIME;
-         MCTSWalkerNode child = generateChild(xb - xStep * Math.signum(walkerDesireds.getDesiredCruiseVelocity()), dt);
-         children.add(child);
-         untriedActions.clear();
-         return child;
-      }
-      else
-      {
-         while (!untriedActions.isEmpty())
-         { // try to expand until a valid action is found
-            int randomAction = untriedActions.removeAt(random.nextInt(untriedActions.size()));
-            MCTSWalkerNode child = generateNodeFromAction(randomAction);
+      while (!untriedActions.isEmpty())
+      { // try to expand until a valid action is found
+         int randomAction = untriedActions.removeAt(random.nextInt(untriedActions.size()));
+         MCTSWalkerNode child = generateNodeFromAction(randomAction);
 
-            if (child.isValidNode())
-            {
-               children.add(child);
-               return child;
-            }
-         }
-
-         if (children.isEmpty() && parent != null)
+         if (child.isValidNode())
          {
-            parent.children.remove(this);
+            children.add(child);
+            return child;
          }
+      }
 
-         return null;
+      recursivelyPruneEmptyNodes(this);
+      return null;
+   }
+
+   private static void recursivelyPruneEmptyNodes(MCTSWalkerNode node)
+   {
+      if (node.children.isEmpty() && node.parent != null)
+      {
+         node.parent.children.remove(node);
+         recursivelyPruneEmptyNodes(node.parent);
       }
    }
 
    private MCTSWalkerNode generateNodeFromAction(int action)
    {
-      double tNominal = computeTimeToReachVelocity(x - xb, xd, walkerDesireds.getDesiredPeakVelocity());
-      if (tNominal < 0.0)
-         tNominal = MIN_STEP_TIME; // min step time
-
       double stepLag = walkerDesireds.getStepLag();
-      double t = tNominal * toDTScaleFactor(action);
+      double dtScaleFactor = stepImmediately ? 1.0 : toDTScaleFactor(action);
+      double icpScaleFactor = stepImmediately ? toICPScaleFactorChangingDirection(action) : toICPScaleFactor(action);
+
+      double t = tNominal * dtScaleFactor;
       double icp = xb + computeICPAtTime(x - xb, xd, t);
-      double xb = icp - toICPScaleFactor(action) * stepLag * Math.signum(walkerDesireds.getDesiredCruiseVelocity());
+      double xb = icp - icpScaleFactor * stepLag;
       return generateChild(xb, t);
    }
 
@@ -169,7 +173,7 @@ public class MCTSWalkerNode
    {
       if (parent != null)
       {
-         stepVelocities.add((x - parent.x) / t);
+         stepVelocities.add(x - parent.x);
          parent.populateStepVelocities(stepVelocities);
       }
    }
@@ -218,6 +222,11 @@ public class MCTSWalkerNode
       return bestChild;
    }
 
+   public int getNumberOfChildren()
+   {
+      return children.size();
+   }
+
    private static final Random random = new Random(32);
 
    public double doRollout()
@@ -232,7 +241,7 @@ public class MCTSWalkerNode
          int maxAttempts = 4;
          for (int i = 0; i < maxAttempts; i++)
          {
-            int randomAction = random.nextInt(NUMBER_OF_ACTIONS);
+            int randomAction = random.nextInt(stepImmediately ? CHANGING_DIRECTION_NUMBER_OF_ACTIONS : NOMINAL_NUMBER_OF_ACTIONS);
             MCTSWalkerNode child = generateNodeFromAction(randomAction);
 
             if (child.isValidNode())
